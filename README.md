@@ -28,6 +28,34 @@ This project walks you through:
 
 By completing this project, you gain practical experience in secure server administration and remote access configuration.
 
+### Project Architecture
+
+```mermaid
+graph TD
+    subgraph "AWS Cloud"
+        EC2["Amazon Linux EC2 Instance"]
+        SG["Security Group"]
+    end
+    
+    subgraph "Local Machine"
+        Key1["SSH Key Pair 1"]
+        Key2["SSH Key Pair 2"] 
+        Config["SSH Config File"]
+        Client["SSH Client"]
+    end
+    
+    SG -->|"Allows Port 22"| EC2
+    Key1 -->|"Public Key"| EC2
+    Key2 -->|"Public Key"| EC2
+    Client -->|"SSH Connection"| EC2
+    Config -->|"Configures"| Client
+
+    style EC2 fill:#f9f,stroke:#333,stroke-width:2px
+    style SG fill:#bbf,stroke:#333,stroke-width:1px
+    style Key1 fill:#bfb,stroke:#333,stroke-width:1px
+    style Key2 fill:#bfb,stroke:#333,stroke-width:1px
+```
+
 ## Prerequisites
 
 - An AWS account.
@@ -38,6 +66,20 @@ By completing this project, you gain practical experience in secure server admin
 ## Project Steps
 
 ### 1. Provisioning the Server
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant AWS as AWS Console
+    participant EC2 as EC2 Instance
+    
+    User->>AWS: Create EC2 Instance
+    AWS->>EC2: Launch Amazon Linux
+    AWS->>EC2: Configure Security Group
+    AWS->>User: Provide Initial Key Pair
+    User->>EC2: Initial SSH Connection
+    Note over User,EC2: Using AWS-provided key pair
+```
 
 1. **Launch an EC2 Instance:**
    - **AMI:** Use Amazon Linux.
@@ -53,6 +95,23 @@ By completing this project, you gain practical experience in secure server admin
    Replace `34.207.140.164` with your instance's public IP address.
 
 ### 2. Generating SSH Key Pairs
+
+```mermaid
+graph LR
+    A["ssh-keygen command"] --> B["~/.ssh/my_first_key (Private)"]
+    A --> C["~/.ssh/my_first_key.pub (Public)"]
+    A --> D["~/.ssh/my_second_key (Private)"]
+    A --> E["~/.ssh/my_second_key.pub (Public)"]
+    
+    C -->|"Copy to server"| F["~/.ssh/authorized_keys on server"]
+    E -->|"Copy to server"| F
+    
+    style B fill:#f96,stroke:#333
+    style D fill:#f96,stroke:#333
+    style C fill:#9f6,stroke:#333
+    style E fill:#9f6,stroke:#333
+    style F fill:#69f,stroke:#333
+```
 
 Generate two new SSH key pairs (separate from the AWS key):
 
@@ -81,6 +140,22 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/my_second_key -C "second-key"
 
 ### 4. Configuring the Local SSH Client
 
+```mermaid
+graph LR
+    A["~/.ssh/config file"] -->|"Contains"| B["Host alias configuration"]
+    B -->|"Specifies"| C["Connection details"]
+    C -->|"Includes"| D["HostName (IP)"]
+    C -->|"Includes"| E["User"]
+    C -->|"Includes"| F["IdentityFile paths"]
+    
+    G["ssh roadmapsh-test-server command"] -->|"Uses"| A
+    G -->|"Connects to"| H["Remote Server"]
+    
+    style A fill:#bbf,stroke:#333
+    style G fill:#bfb,stroke:#333
+    style H fill:#f9f,stroke:#333
+```
+
 Create or update your `~/.ssh/config` file with an alias for easy access. For example:
 
 ```sshconfig
@@ -97,6 +172,23 @@ ssh roadmapsh-test-server
 ```
 
 ### 5. Securing the Server with fail2ban (Optional)
+
+```mermaid
+flowchart TD
+    A["Install fail2ban"] --> B["Copy jail.conf to jail.local"]
+    B --> C["Edit jail.local"]
+    C --> D["Enable sshd jail"]
+    D --> E["Restart fail2ban"]
+    E --> F["Check status"]
+    
+    G["SSH Brute Force Attempt"] -->|"Blocked after 3 failures"| H["fail2ban"]
+    H -->|"Updates"| I["iptables rules"]
+    I -->|"Blocks"| G
+    
+    style G fill:#f66,stroke:#333
+    style H fill:#bbf,stroke:#333
+    style I fill:#9f6,stroke:#333
+```
 
 1. **Update the Server:**
    ```bash
@@ -135,6 +227,25 @@ ssh roadmapsh-test-server
 
 ## Testing the Setup
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant LocalSSH as Local SSH Client
+    participant RemoteSSH as Remote SSH Server
+    
+    User->>LocalSSH: ssh -i ~/.ssh/my_first_key ec2-user@IP
+    LocalSSH->>RemoteSSH: Authenticate with first key
+    RemoteSSH->>User: Successful login
+    
+    User->>LocalSSH: ssh -i ~/.ssh/my_second_key ec2-user@IP
+    LocalSSH->>RemoteSSH: Authenticate with second key
+    RemoteSSH->>User: Successful login
+    
+    User->>LocalSSH: ssh roadmapsh-test-server
+    LocalSSH->>RemoteSSH: Try first key, then second key
+    RemoteSSH->>User: Successful login
+```
+
 - **SSH Connection:**
   - Test connecting using each key individually:
     ```bash
@@ -164,4 +275,3 @@ ssh roadmapsh-test-server
 - [SSH Remote Server Setup Project on roadmap.sh](https://roadmap.sh/projects/ssh-remote-server-setup)
 - [AWS EC2 User Guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/)
 - [fail2ban Documentation](https://www.fail2ban.org/wiki/index.php/Main_Page)
-```
