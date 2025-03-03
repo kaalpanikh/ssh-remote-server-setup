@@ -29,16 +29,13 @@ This creates a secure system where:
 - Messages cannot be altered in transit (integrity)
 
 ```mermaid
-graph LR
-    A[User's Computer] -->|1. Connection Request| B[SSH Server]
-    B -->|2. Server Identity| A
-    A -->|3. Key Exchange| B
-    A -->|4. Authentication with Private Key| B
-    B -->|5. Authentication Verification| A
-    A <-->|6. Encrypted Channel Established| B
-    
-    style A fill:#bbf,stroke:#333
-    style B fill:#f9f,stroke:#333
+sequenceDiagram
+    Client->>Server: 1. Connection Request
+    Server->>Client: 2. Server Identity
+    Client->>Server: 3. Key Exchange
+    Client->>Server: 4. Authentication with Private Key
+    Server->>Client: 5. Authentication Verification
+    Client->>Server: 6. Encrypted Session Begins
 ```
 
 ## Project Overview: Remote Server Setup with Multiple SSH Keys
